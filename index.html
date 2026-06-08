@@ -1,0 +1,1282 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BEAT STRIKER — 節奏狂戰士</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Noto+Sans+TC:wght@300;400;700&display=swap');
+
+  :root {
+    --bg: #071520;
+    --panel: #0c1e2e;
+    --accent: #7ee8f8;
+    --accent2: #f8b4d3;
+    --accent3: #b8f0e0;
+    --accent4: #a8d8f0;
+    --up: #7ee8f8;
+    --down: #f8b4d3;
+    --left: #b8f0e0;
+    --right: #a8d8f0;
+    --text: #d4eff8;
+    --dim: #3a6070;
+    --glow: 0 0 12px rgba(126,232,248,0.6), 0 0 36px rgba(126,232,248,0.2);
+    --glow2: 0 0 12px rgba(248,180,211,0.6), 0 0 36px rgba(248,180,211,0.2);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Noto Sans TC', sans-serif;
+    min-height: 100vh;
+    overflow: hidden;
+    position: relative;
+  }
+
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background: 
+      repeating-linear-gradient(0deg, transparent, transparent 39px, rgba(126,232,248,0.04) 40px),
+      repeating-linear-gradient(90deg, transparent, transparent 39px, rgba(126,232,248,0.04) 40px);
+    pointer-events: none; z-index: 0;
+  }
+
+  /* ===== SCREENS ===== */
+  .screen {
+    position: fixed; inset: 0;
+    display: flex; align-items: center; justify-content: center;
+    z-index: 10; flex-direction: column;
+    background: rgba(10,10,20,0.97);
+  }
+  .screen.hidden { display: none; }
+
+  /* ===== TUTORIAL SCREEN ===== */
+  #tutorialScreen {
+    padding: 24px;
+    overflow-y: auto;
+  }
+  .tutorial-box {
+    max-width: 680px; width: 100%;
+    background: var(--panel);
+    border: 1px solid rgba(126,232,248,0.25);
+    border-radius: 16px;
+    padding: 36px;
+    box-shadow: 0 0 40px rgba(126,232,248,0.08);
+  }
+  .tutorial-box h1 {
+    font-family: 'Orbitron', sans-serif;
+    font-size: clamp(22px, 4vw, 36px);
+    color: var(--accent);
+    text-shadow: var(--glow);
+    text-align: center;
+    margin-bottom: 8px;
+    letter-spacing: 4px;
+  }
+  .tutorial-box .subtitle {
+    text-align: center;
+    color: var(--dim);
+    font-size: 13px;
+    margin-bottom: 28px;
+    letter-spacing: 2px;
+  }
+  .tutorial-section { margin-bottom: 22px; }
+  .tutorial-section h3 {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 13px;
+    color: var(--accent2);
+    letter-spacing: 2px;
+    margin-bottom: 10px;
+    border-left: 3px solid var(--accent2);
+    padding-left: 10px;
+  }
+  .key-demo {
+    display: flex; gap: 12px; flex-wrap: wrap; margin: 10px 0;
+  }
+  .key-item {
+    display: flex; align-items: center; gap: 8px;
+    background: rgba(255,255,255,0.04);
+    border-radius: 8px; padding: 8px 14px;
+    border: 1px solid rgba(255,255,255,0.08);
+  }
+  .key-box {
+    width: 36px; height: 36px;
+    border-radius: 6px;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Orbitron', sans-serif; font-size: 14px; font-weight: 900;
+    border: 2px solid;
+  }
+  .key-up { border-color: var(--up); color: var(--up); background: rgba(126,232,248,0.1); }
+  .key-down { border-color: var(--down); color: var(--down); background: rgba(248,180,211,0.1); }
+  .key-left { border-color: var(--left); color: var(--left); background: rgba(184,240,224,0.1); }
+  .key-right { border-color: var(--right); color: var(--right); background: rgba(168,216,240,0.1); }
+  .key-item span { font-size: 13px; color: var(--text); }
+
+  .arrow-demo {
+    display: flex; gap: 8px; justify-content: center; margin: 14px 0;
+  }
+  .arrow-tile {
+    width: 52px; height: 52px; border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px; font-weight: bold;
+    border: 2px solid; animation: tileFloat 2s ease-in-out infinite;
+  }
+  .arrow-tile:nth-child(2) { animation-delay: 0.3s; }
+  .arrow-tile:nth-child(3) { animation-delay: 0.6s; }
+  .arrow-tile:nth-child(4) { animation-delay: 0.9s; }
+  @keyframes tileFloat {
+    0%,100% { transform: translateY(0); }
+    50% { transform: translateY(-6px); }
+  }
+  .at-up { border-color: var(--up); color: var(--up); background: rgba(126,232,248,0.12); }
+  .at-down { border-color: var(--down); color: var(--down); background: rgba(248,180,211,0.12); }
+  .at-left { border-color: var(--left); color: var(--left); background: rgba(184,240,224,0.12); }
+  .at-right { border-color: var(--right); color: var(--right); background: rgba(168,216,240,0.12); }
+
+  .scoring-row {
+    display: flex; gap: 12px; flex-wrap: wrap;
+  }
+  .score-chip {
+    padding: 6px 16px; border-radius: 20px; font-size: 13px;
+    font-family: 'Orbitron', sans-serif; letter-spacing: 1px;
+  }
+  .chip-hit { background: rgba(184,240,224,0.15); border: 1px solid var(--accent3); color: var(--accent3); }
+  .chip-miss { background: rgba(248,180,211,0.15); border: 1px solid var(--accent2); color: var(--accent2); }
+
+  .tutorial-btn {
+    font-family: 'Orbitron', sans-serif; font-size: 14px;
+    padding: 14px 32px; border-radius: 8px; cursor: pointer;
+    letter-spacing: 2px; font-weight: 700;
+    transition: all 0.2s; border: none;
+  }
+  .btn-primary {
+    background: var(--accent); color: #000;
+    box-shadow: var(--glow);
+  }
+  .btn-primary:hover { transform: scale(1.04); box-shadow: 0 0 24px var(--accent); }
+  .btn-secondary {
+    background: transparent; color: var(--dim);
+    border: 1px solid var(--dim);
+  }
+  .btn-secondary:hover { color: var(--text); border-color: var(--text); }
+  .tutorial-actions { display: flex; gap: 14px; justify-content: center; margin-top: 28px; }
+
+  /* ===== SELECT SCREEN ===== */
+  #selectScreen { gap: 24px; padding: 24px; }
+  .select-title {
+    font-family: 'Orbitron', sans-serif;
+    font-size: clamp(20px, 4vw, 32px);
+    color: var(--accent); text-shadow: var(--glow);
+    letter-spacing: 4px; text-align: center;
+  }
+  .select-sub { color: var(--dim); font-size: 13px; letter-spacing: 2px; }
+  .song-list {
+    display: flex; flex-direction: column; gap: 12px;
+    width: 100%; max-width: 560px;
+  }
+  .song-card {
+    background: var(--panel);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 12px; padding: 16px 20px;
+    cursor: pointer; transition: all 0.2s;
+    display: flex; align-items: center; gap: 16px;
+  }
+  .song-card:hover, .song-card.selected {
+    border-color: var(--accent);
+    background: rgba(0,245,255,0.06);
+    box-shadow: 0 0 16px rgba(0,245,255,0.15);
+    transform: translateX(4px);
+  }
+  .song-num {
+    font-family: 'Orbitron', sans-serif; font-size: 20px;
+    color: var(--accent); font-weight: 900; min-width: 32px;
+  }
+  .song-info { flex: 1; }
+  .song-name { font-size: 16px; font-weight: 700; margin-bottom: 4px; }
+  .song-meta { font-size: 12px; color: var(--dim); letter-spacing: 1px; }
+  .song-bpm {
+    font-family: 'Orbitron', sans-serif; font-size: 14px;
+    color: var(--accent2); font-weight: 700;
+  }
+
+  .best-score-display {
+    font-family: 'Orbitron', sans-serif; font-size: 13px;
+    color: #b8f0e0; letter-spacing: 2px;
+    background: rgba(184,240,224,0.08); border: 1px solid rgba(184,240,224,0.25);
+    padding: 8px 20px; border-radius: 20px;
+  }
+
+  /* ===== GAME SCREEN ===== */
+  #gameScreen {
+    display: flex; flex-direction: column;
+    background: var(--bg); position: fixed; inset: 0;
+  }
+  #gameScreen.hidden { display: none; }
+
+  .game-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 12px 24px;
+    background: rgba(15,15,32,0.9);
+    border-bottom: 1px solid rgba(0,245,255,0.1);
+    z-index: 5;
+  }
+  .hud-block { text-align: center; }
+  .hud-label {
+    font-family: 'Orbitron', sans-serif; font-size: 10px;
+    color: var(--dim); letter-spacing: 2px; margin-bottom: 2px;
+  }
+  .hud-value {
+    font-family: 'Orbitron', sans-serif; font-size: 22px;
+    font-weight: 900; color: var(--accent);
+  }
+  #scoreDisplay { color: var(--accent3); }
+  #comboDisplay { color: var(--accent2); }
+  #songNameDisplay { font-size: 13px; color: var(--text); letter-spacing: 1px; max-width: 160px; text-align: center; }
+  #timerDisplay { color: var(--accent); }
+
+  /* ===== LANE AREA ===== */
+  #laneContainer {
+    flex: 1; position: relative; overflow: hidden;
+    display: flex; flex-direction: column;
+  }
+
+  #canvas {
+    position: absolute; inset: 0; width: 100%; height: 100%;
+  }
+
+  /* HIT ZONE */
+  .hit-zone {
+    position: absolute; bottom: 90px; left: 50%;
+    transform: translateX(-50%);
+    display: flex; gap: 14px; z-index: 4;
+  }
+  .hit-key {
+    width: 64px; height: 64px; border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 26px; font-weight: 900;
+    border: 3px solid; transition: all 0.08s;
+    position: relative;
+  }
+  .hit-key::after {
+    content: attr(data-label);
+    position: absolute; bottom: -20px; left: 50%;
+    transform: translateX(-50%);
+    font-size: 10px; font-family: 'Orbitron', sans-serif;
+    letter-spacing: 1px; opacity: 0.5;
+  }
+  .hk-up { border-color: rgba(126,232,248,0.35); color: rgba(126,232,248,0.5); background: rgba(126,232,248,0.04); }
+  .hk-down { border-color: rgba(248,180,211,0.35); color: rgba(248,180,211,0.5); background: rgba(248,180,211,0.04); }
+  .hk-left { border-color: rgba(184,240,224,0.35); color: rgba(184,240,224,0.5); background: rgba(184,240,224,0.04); }
+  .hk-right { border-color: rgba(168,216,240,0.35); color: rgba(168,216,240,0.5); background: rgba(168,216,240,0.04); }
+  .hk-up.active { border-color: var(--up); color: var(--up); background: rgba(126,232,248,0.18); box-shadow: 0 0 18px rgba(126,232,248,0.5); transform: scale(1.1); }
+  .hk-down.active { border-color: var(--down); color: var(--down); background: rgba(248,180,211,0.18); box-shadow: 0 0 18px rgba(248,180,211,0.5); transform: scale(1.1); }
+  .hk-left.active { border-color: var(--left); color: var(--left); background: rgba(184,240,224,0.18); box-shadow: 0 0 18px rgba(184,240,224,0.5); transform: scale(1.1); }
+  .hk-right.active { border-color: var(--right); color: var(--right); background: rgba(168,216,240,0.18); box-shadow: 0 0 18px rgba(168,216,240,0.5); transform: scale(1.1); }
+
+  /* CHARACTER */
+  #character {
+    position: absolute; bottom: 155px; left: 50%;
+    transform: translateX(-50%);
+    z-index: 3; transition: transform 0.15s ease;
+    width: 64px; height: 96px;
+  }
+
+  /* FEEDBACK TEXT */
+  #feedbackText {
+    position: absolute; top: 40%; left: 50%;
+    transform: translate(-50%, -50%);
+    font-family: 'Orbitron', sans-serif; font-size: 24px;
+    font-weight: 900; pointer-events: none; z-index: 6;
+    text-align: center; opacity: 0;
+    transition: opacity 0.1s;
+    text-shadow: 0 0 20px currentColor;
+  }
+  #praiseText {
+    position: absolute; top: 30%; left: 50%;
+    transform: translate(-50%, -50%);
+    font-family: 'Orbitron', sans-serif; font-size: 18px;
+    font-weight: 700; pointer-events: none; z-index: 6;
+    text-align: center; opacity: 0;
+    transition: opacity 0.1s;
+    color: #b8f0e0; text-shadow: 0 0 16px rgba(184,240,224,0.6);
+  }
+
+  /* PROGRESS BAR */
+  .progress-bar-wrap {
+    position: absolute; bottom: 0; left: 0; right: 0;
+    height: 4px; background: rgba(255,255,255,0.05); z-index: 5;
+  }
+  #progressBar {
+    height: 100%; width: 0%;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    transition: width 0.2s linear;
+  }
+
+  /* ===== RESULT SCREEN ===== */
+  #resultScreen { gap: 20px; padding: 24px; }
+  .result-box {
+    max-width: 480px; width: 100%;
+    background: var(--panel);
+    border: 1px solid rgba(126,232,248,0.25);
+    border-radius: 16px; padding: 36px;
+    text-align: center;
+    box-shadow: 0 0 40px rgba(126,232,248,0.08);
+  }
+  .result-title {
+    font-family: 'Orbitron', sans-serif; font-size: 28px;
+    font-weight: 900; letter-spacing: 4px;
+    margin-bottom: 8px;
+  }
+  .result-grade {
+    font-family: 'Orbitron', sans-serif; font-size: 72px;
+    font-weight: 900; margin: 16px 0;
+    animation: gradePulse 1s ease-in-out infinite;
+  }
+  @keyframes gradePulse {
+    0%,100% { transform: scale(1); }
+    50% { transform: scale(1.08); }
+  }
+  .result-stats { display: flex; gap: 16px; justify-content: center; margin: 16px 0; flex-wrap: wrap; }
+  .stat-item { text-align: center; }
+  .stat-val {
+    font-family: 'Orbitron', sans-serif; font-size: 26px;
+    font-weight: 900;
+  }
+  .stat-lbl { font-size: 11px; color: var(--dim); letter-spacing: 2px; margin-top: 4px; }
+  .result-message {
+    font-size: 15px; color: var(--text); margin: 16px 0;
+    line-height: 1.7; padding: 12px; background: rgba(255,255,255,0.03); border-radius: 8px;
+  }
+  .best-badge {
+    font-family: 'Orbitron', sans-serif; font-size: 12px;
+    color: #b8f0e0; letter-spacing: 2px;
+    background: rgba(184,240,224,0.1); border: 1px solid rgba(184,240,224,0.3);
+    padding: 6px 16px; border-radius: 20px; display: inline-block;
+    margin-bottom: 16px;
+  }
+  .result-actions { display: flex; gap: 12px; justify-content: center; margin-top: 20px; }
+
+  /* ===== PARTICLES ===== */
+  .particle {
+    position: fixed; pointer-events: none; z-index: 100;
+    border-radius: 50%;
+    animation: particleFly 0.6s ease-out forwards;
+  }
+  @keyframes particleFly {
+    0% { opacity: 1; transform: translate(0,0) scale(1); }
+    100% { opacity: 0; transform: translate(var(--px), var(--py)) scale(0); }
+  }
+
+  /* ===== PAUSE OVERLAY ===== */
+  #pauseOverlay {
+    position: fixed; inset: 0; background: rgba(10,10,20,0.85);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 20; flex-direction: column; gap: 16px;
+  }
+  #pauseOverlay.hidden { display: none; }
+  .pause-title {
+    font-family: 'Orbitron', sans-serif; font-size: 36px;
+    color: var(--accent); text-shadow: var(--glow); letter-spacing: 6px;
+  }
+
+  /* SPEED INDICATOR */
+  #speedIndicator {
+    position: absolute; top: 14px; right: 14px;
+    font-family: 'Orbitron', sans-serif; font-size: 11px;
+    color: var(--accent2); letter-spacing: 2px;
+    background: rgba(255,45,120,0.1); border: 1px solid rgba(255,45,120,0.3);
+    padding: 4px 10px; border-radius: 10px; z-index: 5;
+  }
+
+  /* LANE GUIDES */
+  .lane-guide {
+    position: absolute; top: 0; bottom: 90px;
+    width: 64px; border-left: 1px solid rgba(255,255,255,0.03);
+    pointer-events: none; z-index: 1;
+  }
+
+  @media (max-width: 480px) {
+    .hit-key { width: 52px; height: 52px; font-size: 20px; }
+    .hit-zone { gap: 10px; bottom: 80px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- TUTORIAL SCREEN -->
+<div id="tutorialScreen" class="screen">
+  <div class="tutorial-box">
+    <h1>BEAT STRIKER</h1>
+    <div class="subtitle">節奏狂戰士 — 使用說明</div>
+
+    <div class="tutorial-section">
+      <h3>遊戲目標</h3>
+      <p style="font-size:14px;line-height:1.8;color:var(--text);">
+        方塊從螢幕上方落下，當方塊到達底部判定區時，按下對應的方向鍵擊中它！<br>
+        準確命中方塊可獲得分數，分數越高節奏越快，挑戰你的極限！
+      </p>
+    </div>
+
+    <div class="tutorial-section">
+      <h3>操作方式</h3>
+      <div class="key-demo">
+        <div class="key-item"><div class="key-box key-up">↑</div><span>上方向鍵 — 青色方塊</span></div>
+        <div class="key-item"><div class="key-box key-down">↓</div><span>下方向鍵 — 粉色方塊</span></div>
+        <div class="key-item"><div class="key-box key-left">←</div><span>左方向鍵 — 黃色方塊</span></div>
+        <div class="key-item"><div class="key-box key-right">→</div><span>右方向鍵 — 綠色方塊</span></div>
+      </div>
+      <div style="margin-top:10px;font-size:13px;color:var(--dim);">按 <b style="color:var(--text)">ESC</b> 暫停遊戲</div>
+    </div>
+
+    <div class="tutorial-section">
+      <h3>方塊示意</h3>
+      <div class="arrow-demo">
+        <div class="arrow-tile at-up">↑</div>
+        <div class="arrow-tile at-down">↓</div>
+        <div class="arrow-tile at-left">←</div>
+        <div class="arrow-tile at-right">→</div>
+      </div>
+    </div>
+
+    <div class="tutorial-section">
+      <h3>計分規則</h3>
+      <div class="scoring-row">
+        <div class="score-chip chip-hit">✓ 命中 +1分</div>
+        <div class="score-chip chip-miss">✗ 失誤 -1分</div>
+        <div class="score-chip" style="background:rgba(126,232,248,0.1);border:1px solid var(--accent);color:var(--accent);">連擊 COMBO 加成！</div>
+      </div>
+      <p style="font-size:12px;color:var(--dim);margin-top:8px;line-height:1.6;">
+        分數越高，方塊速度越快（有上限）<br>角色也會依照你的分數給予不同的鼓勵！
+      </p>
+    </div>
+
+    <div class="tutorial-section">
+      <h3>判定時機</h3>
+      <p style="font-size:13px;color:var(--text);line-height:1.7;">
+        方塊的<b style="color:var(--accent)">中心到達底部判定框</b>時按鍵即為命中。<br>
+        太早或太晚按都算失誤，注意節奏感！<br>
+        <span style="color:var(--accent3);">判定視窗：±80ms（高難度）</span>
+      </p>
+    </div>
+
+    <div class="tutorial-actions">
+      <button class="tutorial-btn btn-secondary" onclick="skipTutorial()">已了解，跳過教學</button>
+      <button class="tutorial-btn btn-primary" onclick="goToSelect()">開始選歌 →</button>
+    </div>
+  </div>
+</div>
+
+<!-- SELECT SCREEN -->
+<div id="selectScreen" class="screen hidden">
+  <div class="select-title">選擇曲目</div>
+  <div class="select-sub">SELECT YOUR TRACK</div>
+  <div id="bestScoreWrap" class="best-score-display" style="display:none">⭐ 最高分：<span id="bestScoreVal">0</span></div>
+  <div class="song-list" id="songList"></div>
+  <div style="display:flex;gap:12px;margin-top:8px;">
+    <button class="tutorial-btn btn-secondary" onclick="showTutorial()" style="font-size:12px;padding:10px 20px;">查看教學</button>
+    <button class="tutorial-btn btn-primary" id="startBtn" onclick="startGame()">開始遊戲 ▶</button>
+  </div>
+</div>
+
+<!-- GAME SCREEN -->
+<div id="gameScreen" class="hidden">
+  <div class="game-header">
+    <div class="hud-block">
+      <div class="hud-label">SCORE</div>
+      <div class="hud-value" id="scoreDisplay">0</div>
+    </div>
+    <div class="hud-block">
+      <div id="songNameDisplay">—</div>
+    </div>
+    <div class="hud-block">
+      <div class="hud-label">COMBO</div>
+      <div class="hud-value" id="comboDisplay">0</div>
+    </div>
+    <div class="hud-block">
+      <div class="hud-label">TIME</div>
+      <div class="hud-value" id="timerDisplay">60</div>
+    </div>
+  </div>
+
+  <div id="laneContainer">
+    <canvas id="canvas"></canvas>
+    <div id="speedIndicator">SPEED ×1.0</div>
+    <div id="feedbackText">PERFECT</div>
+    <div id="praiseText"></div>
+
+    <div class="hit-zone">
+      <div class="hit-key hk-left" id="hkLeft" data-label="←">←</div>
+      <div class="hit-key hk-up" id="hkUp" data-label="↑">↑</div>
+      <div class="hit-key hk-down" id="hkDown" data-label="↓">↓</div>
+      <div class="hit-key hk-right" id="hkRight" data-label="→">→</div>
+    </div>
+
+    <div id="character">
+      <svg viewBox="0 0 60 88" xmlns="http://www.w3.org/2000/svg" id="charSvg">
+        <!-- shadow -->
+        <ellipse cx="30" cy="86" rx="10" ry="3" fill="rgba(0,0,0,0.25)"/>
+        <!-- body — teardrop shape -->
+        <path d="M18 52 Q16 62 18 72 Q22 80 30 82 Q38 80 42 72 Q44 62 42 52 Q38 42 30 40 Q22 42 18 52Z"
+          fill="#b8eef8" stroke="#7ee8f8" stroke-width="1.2"/>
+        <!-- body sheen -->
+        <path d="M22 48 Q20 55 21 63 Q22 50 28 47Z" fill="rgba(255,255,255,0.4)"/>
+        <!-- scarf / collar -->
+        <path d="M19 51 Q30 56 41 51 Q38 46 30 44 Q22 46 19 51Z" fill="#f8d4ec" stroke="#f8b4d3" stroke-width="0.8"/>
+        <!-- head -->
+        <ellipse cx="30" cy="26" rx="16" ry="17" fill="#d8f4fc" stroke="#7ee8f8" stroke-width="1.2"/>
+        <!-- cheek blushes -->
+        <ellipse cx="20" cy="30" rx="4" ry="2.5" fill="rgba(248,180,211,0.45)"/>
+        <ellipse cx="40" cy="30" rx="4" ry="2.5" fill="rgba(248,180,211,0.45)"/>
+        <!-- hair — water droplet wisps -->
+        <path d="M18 18 Q14 10 19 8 Q20 14 22 17" fill="#a8dcf0" stroke="none"/>
+        <path d="M30 10 Q30 4 34 3 Q33 8 32 12" fill="#a8dcf0" stroke="none"/>
+        <path d="M42 18 Q46 10 41 8 Q40 14 38 17" fill="#a8dcf0" stroke="none"/>
+        <!-- eyes -->
+        <ellipse cx="23" cy="25" rx="4" ry="4.5" fill="white" stroke="#7ee8f8" stroke-width="0.8"/>
+        <ellipse cx="37" cy="25" rx="4" ry="4.5" fill="white" stroke="#7ee8f8" stroke-width="0.8"/>
+        <circle cx="24" cy="26" r="2.5" fill="#4ab8d8"/>
+        <circle cx="38" cy="26" r="2.5" fill="#4ab8d8"/>
+        <circle cx="24.8" cy="25.2" r="1" fill="#1a5a70"/>
+        <circle cx="38.8" cy="25.2" r="1" fill="#1a5a70"/>
+        <!-- eye sparkles -->
+        <circle cx="26" cy="24" r="0.8" fill="white"/>
+        <circle cx="40" cy="24" r="0.8" fill="white"/>
+        <!-- mouth default smile -->
+        <path id="charMouth" d="M25 33 Q30 37 35 33" fill="none" stroke="#7abed8" stroke-width="1.5" stroke-linecap="round"/>
+        <!-- arms -->
+        <path id="armL" d="M18 56 Q10 62 9 68" fill="none" stroke="#a8dcf0" stroke-width="3" stroke-linecap="round"/>
+        <path id="armR" d="M42 56 Q50 62 51 68" fill="none" stroke="#a8dcf0" stroke-width="3" stroke-linecap="round"/>
+        <!-- little hands -->
+        <circle id="handL" cx="9" cy="69" r="3.5" fill="#c8ecf8" stroke="#7ee8f8" stroke-width="0.8"/>
+        <circle id="handR" cx="51" cy="69" r="3.5" fill="#c8ecf8" stroke="#7ee8f8" stroke-width="0.8"/>
+        <!-- legs -->
+        <path d="M25 80 Q23 84 21 87" fill="none" stroke="#a8dcf0" stroke-width="2.5" stroke-linecap="round"/>
+        <path d="M35 80 Q37 84 39 87" fill="none" stroke="#a8dcf0" stroke-width="2.5" stroke-linecap="round"/>
+        <!-- feet -->
+        <ellipse cx="20" cy="87" rx="4" ry="2" fill="#c8ecf8" stroke="#7ee8f8" stroke-width="0.8"/>
+        <ellipse cx="40" cy="87" rx="4" ry="2" fill="#c8ecf8" stroke="#7ee8f8" stroke-width="0.8"/>
+        <!-- water droplet badge on chest -->
+        <path d="M30 58 Q27 62 28 65 Q30 68 32 65 Q33 62 30 58Z" fill="#7ee8f8" opacity="0.7"/>
+        <!-- ear/decoration -->
+        <circle cx="14" cy="26" r="3" fill="#b8eef8" stroke="#7ee8f8" stroke-width="0.8"/>
+        <circle cx="46" cy="26" r="3" fill="#b8eef8" stroke="#7ee8f8" stroke-width="0.8"/>
+      </svg>
+    </div>
+
+    <div class="progress-bar-wrap"><div id="progressBar"></div></div>
+  </div>
+</div>
+
+<!-- PAUSE OVERLAY -->
+<div id="pauseOverlay" class="hidden">
+  <div class="pause-title">PAUSED</div>
+  <div style="color:var(--dim);font-size:13px;letter-spacing:2px;font-family:'Orbitron',sans-serif;">按 ESC 繼續</div>
+  <div style="display:flex;gap:12px;margin-top:16px;">
+    <button class="tutorial-btn btn-secondary" onclick="quitGame()" style="font-size:12px;padding:10px 20px;">放棄離開</button>
+    <button class="tutorial-btn btn-primary" onclick="resumeGame()">繼續 ▶</button>
+  </div>
+</div>
+
+<!-- RESULT SCREEN -->
+<div id="resultScreen" class="screen hidden">
+  <div class="result-box">
+    <div class="result-title" id="resultTitle">RESULT</div>
+    <div id="newBestBadge" class="best-badge" style="display:none">🏆 新紀錄！</div>
+    <div class="result-grade" id="resultGrade">S</div>
+    <div class="result-stats">
+      <div class="stat-item"><div class="stat-val" id="rScore" style="color:var(--accent3)">0</div><div class="stat-lbl">SCORE</div></div>
+      <div class="stat-item"><div class="stat-val" id="rHit" style="color:var(--accent4)">0</div><div class="stat-lbl">HITS</div></div>
+      <div class="stat-item"><div class="stat-val" id="rMiss" style="color:var(--accent2)">0</div><div class="stat-lbl">MISS</div></div>
+      <div class="stat-item"><div class="stat-val" id="rMaxCombo" style="color:var(--accent)">0</div><div class="stat-lbl">MAX COMBO</div></div>
+    </div>
+    <div class="result-message" id="resultMessage"></div>
+    <div class="result-actions">
+      <button class="tutorial-btn btn-secondary" onclick="goToSelect()">選歌</button>
+      <button class="tutorial-btn btn-primary" onclick="restartGame()">再試一次 ↺</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ===================== SONGS =====================
+const SONGS = [
+  {
+    id: 0, name: "NEON STRIKE", bpm: 182,
+    genre: "ELECTRO / HIT", color: "#7ee8f8",
+    desc: "高強度電子舞曲，充滿爆發力的節奏",
+    pattern: [0,1,0,1,0,1,1,0,1,0,1,1,0,0,1,1],
+  },
+  {
+    id: 1, name: "CYBER PULSE", bpm: 195,
+    genre: "TECHNO / RUSH", color: "#f8b4d3",
+    desc: "急速科技節奏，考驗你的反應速度",
+    pattern: [1,0,1,1,0,1,0,1,1,0,0,1,1,0,1,0],
+  },
+  {
+    id: 2, name: "STARFALL", bpm: 188,
+    genre: "SYNTH / WAVE", color: "#b8f0e0",
+    desc: "波浪式合成器旋律，變速節奏挑戰",
+    pattern: [1,1,0,1,0,0,1,1,0,1,1,0,1,0,1,1],
+  },
+  {
+    id: 3, name: "VOID RUNNER", bpm: 210,
+    genre: "DRUM'N'BASS / EX", color: "#a8d8f0",
+    desc: "最高難度！極速鼓點，只有真正的高手才能通關",
+    pattern: [1,0,1,0,1,1,1,0,1,1,0,1,0,1,1,1],
+  },
+  {
+    id: 4, name: "PHANTOM BEAT", bpm: 200,
+    genre: "HARDSTYLE / MIX", color: "#e0c8f8",
+    desc: "混合型節奏，雙重拍點，讓你的手指飛起來",
+    pattern: [1,1,0,0,1,1,0,1,0,0,1,1,1,0,1,0],
+  },
+];
+
+// ===================== STATE =====================
+let selectedSong = 0;
+let bestScore = parseInt(localStorage.getItem('beatstriker_best') || '0');
+let gameState = null;
+let animFrame = null;
+let lastTime = 0;
+let isPaused = false;
+let gameTimer = null;
+let audioCtx = null;
+let beatInterval = null;
+
+const DIRS = ['up','down','left','right'];
+const DIR_ARROWS = { up:'↑', down:'↓', left:'←', right:'→' };
+const DIR_COLORS = { up:'#7ee8f8', down:'#f8b4d3', left:'#b8f0e0', right:'#a8d8f0' };
+const DIR_KEYS = { ArrowUp:'up', ArrowDown:'down', ArrowLeft:'left', ArrowRight:'right' };
+const KEY_EL = { up:'hkUp', down:'hkDown', left:'hkLeft', right:'hkRight' };
+
+const HIT_WINDOW = 90; // ms
+const GAME_DURATION = 60000; // 60s
+
+// ===================== INIT =====================
+function init() {
+  updateBestDisplay();
+  renderSongList();
+  const canvas = document.getElementById('canvas');
+  canvas.width = canvas.offsetWidth || window.innerWidth;
+  canvas.height = canvas.offsetHeight || window.innerHeight;
+  window.addEventListener('resize', onResize);
+}
+
+function onResize() {
+  if (!gameState) return;
+  const canvas = document.getElementById('canvas');
+  canvas.width = canvas.offsetWidth;
+  canvas.height = canvas.offsetHeight;
+  gameState.canvasH = canvas.height;
+  gameState.canvasW = canvas.width;
+}
+
+function updateBestDisplay() {
+  const el = document.getElementById('bestScoreWrap');
+  const val = document.getElementById('bestScoreVal');
+  if (bestScore > 0) {
+    el.style.display = '';
+    val.textContent = bestScore;
+  } else {
+    el.style.display = 'none';
+  }
+}
+
+// ===================== TUTORIAL =====================
+function showTutorial() {
+  showScreen('tutorialScreen');
+}
+function skipTutorial() {
+  goToSelect();
+}
+function goToSelect() {
+  stopGame();
+  updateBestDisplay();
+  showScreen('selectScreen');
+}
+
+// ===================== SONG SELECT =====================
+function renderSongList() {
+  const container = document.getElementById('songList');
+  container.innerHTML = '';
+  SONGS.forEach((s, i) => {
+    const div = document.createElement('div');
+    div.className = 'song-card' + (i === selectedSong ? ' selected' : '');
+    div.innerHTML = `
+      <div class="song-num" style="color:${s.color}">${i+1}</div>
+      <div class="song-info">
+        <div class="song-name">${s.name}</div>
+        <div class="song-meta">${s.genre} · ${s.desc}</div>
+      </div>
+      <div class="song-bpm" style="color:${s.color}">${s.bpm} BPM</div>
+    `;
+    div.onclick = () => {
+      selectedSong = i;
+      document.querySelectorAll('.song-card').forEach((c,j) => {
+        c.classList.toggle('selected', j===i);
+      });
+    };
+    container.appendChild(div);
+  });
+}
+
+// ===================== AUDIO =====================
+function initAudio() {
+  if (!audioCtx) {
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  }
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+}
+
+function playHitSound(hit) {
+  if (!audioCtx) return;
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+  osc.connect(gain); gain.connect(audioCtx.destination);
+  if (hit) {
+    osc.frequency.value = 880;
+    gain.gain.setValueAtTime(0.18, audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.12);
+    osc.type = 'sine';
+  } else {
+    osc.frequency.value = 220;
+    gain.gain.setValueAtTime(0.12, audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.18);
+    osc.type = 'sawtooth';
+  }
+  osc.start(); osc.stop(audioCtx.currentTime + 0.2);
+}
+
+function playBeatSound(strong) {
+  if (!audioCtx) return;
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+  osc.connect(gain); gain.connect(audioCtx.destination);
+  osc.frequency.value = strong ? 140 : 100;
+  osc.type = 'triangle';
+  gain.gain.setValueAtTime(strong ? 0.12 : 0.07, audioCtx.currentTime);
+  gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.08);
+  osc.start(); osc.stop(audioCtx.currentTime + 0.1);
+}
+
+// ===================== GAME =====================
+function startGame() {
+  initAudio();
+  const song = SONGS[selectedSong];
+  const canvas = document.getElementById('canvas');
+  canvas.width = canvas.offsetWidth || window.innerWidth;
+  canvas.height = canvas.offsetHeight || (window.innerHeight - 60);
+
+  gameState = {
+    score: 0,
+    combo: 0,
+    maxCombo: 0,
+    hits: 0,
+    misses: 0,
+    tiles: [],
+    song: song,
+    startTime: performance.now(),
+    elapsed: 0,
+    speed: 1.0,
+    canvasW: canvas.width,
+    canvasH: canvas.height,
+    beatCount: 0,
+    nextBeatTime: 0,
+    keysHeld: {},
+    ended: false,
+    lastPraiseScore: 0,
+  };
+
+  document.getElementById('songNameDisplay').textContent = song.name;
+  document.getElementById('scoreDisplay').textContent = '0';
+  document.getElementById('comboDisplay').textContent = '0';
+  document.getElementById('timerDisplay').textContent = '60';
+  document.getElementById('progressBar').style.width = '0%';
+  document.getElementById('speedIndicator').textContent = 'SPEED ×1.0';
+
+  showScreen('gameScreen');
+  document.getElementById('gameScreen').classList.remove('hidden');
+
+  updateCharacter(0, false);
+  scheduleBeat();
+  lastTime = performance.now();
+  animFrame = requestAnimationFrame(gameLoop);
+}
+
+function scheduleBeat() {
+  if (!gameState) return;
+  const song = gameState.song;
+  const beatMs = 60000 / song.bpm;
+  const now = performance.now();
+  if (gameState.nextBeatTime === 0) gameState.nextBeatTime = now + beatMs;
+}
+
+function gameLoop(timestamp) {
+  if (!gameState || gameState.ended) return;
+  if (isPaused) { animFrame = requestAnimationFrame(gameLoop); return; }
+
+  const dt = timestamp - lastTime;
+  lastTime = timestamp;
+  gameState.elapsed = timestamp - gameState.startTime;
+
+  // timer
+  const remaining = Math.max(0, Math.ceil((GAME_DURATION - gameState.elapsed) / 1000));
+  document.getElementById('timerDisplay').textContent = remaining;
+  document.getElementById('progressBar').style.width = (gameState.elapsed / GAME_DURATION * 100) + '%';
+
+  if (gameState.elapsed >= GAME_DURATION) {
+    endGame();
+    return;
+  }
+
+  // speed scaling
+  const s = gameState.score;
+  gameState.speed = Math.min(2.8, 1.0 + Math.max(0, s) * 0.012);
+  document.getElementById('speedIndicator').textContent = 'SPEED ×' + gameState.speed.toFixed(1);
+
+  // beat scheduling
+  const song = gameState.song;
+  const beatMs = 60000 / song.bpm;
+  while (gameState.nextBeatTime <= timestamp) {
+    const patIdx = gameState.beatCount % song.pattern.length;
+    const isStrong = song.pattern[patIdx] === 1;
+    playBeatSound(isStrong);
+
+    // spawn tile on beat (with variation)
+    spawnTile(isStrong);
+
+    // double spawn on strong beats at high speed
+    if (isStrong && gameState.speed >= 1.8 && Math.random() < 0.5) {
+      setTimeout(() => { if(gameState && !gameState.ended) spawnTile(false); }, beatMs * 0.25);
+    }
+    // triple spawn at max speed
+    if (gameState.speed >= 2.4 && Math.random() < 0.35) {
+      setTimeout(() => { if(gameState && !gameState.ended) spawnTile(isStrong); }, beatMs * 0.5);
+    }
+
+    gameState.nextBeatTime += beatMs;
+    gameState.beatCount++;
+  }
+
+  // update tiles
+  const tileSpeed = (gameState.canvasH * 0.55) * gameState.speed * (dt / 1000);
+  const hitY = gameState.canvasH - 110;
+  const removeList = [];
+
+  for (let t of gameState.tiles) {
+    t.y += tileSpeed;
+    // auto-miss if tile passes hit zone
+    if (!t.hit && !t.missed && t.y > hitY + 80) {
+      t.missed = true;
+      onMiss();
+    }
+    if (t.y > gameState.canvasH + 60) removeList.push(t);
+  }
+  gameState.tiles = gameState.tiles.filter(t => !removeList.includes(t));
+
+  drawFrame();
+  animFrame = requestAnimationFrame(gameLoop);
+}
+
+function spawnTile(strong) {
+  if (!gameState) return;
+  const dir = DIRS[Math.floor(Math.random() * 4)];
+  const laneMap = { left: 0, up: 1, down: 2, right: 3 };
+  const lane = laneMap[dir];
+  const laneCount = 4;
+  const margin = (gameState.canvasW - (64 * laneCount + 14 * (laneCount-1))) / 2;
+  const x = margin + lane * (64 + 14) + 32;
+
+  gameState.tiles.push({
+    dir, x, y: -40, size: 52,
+    color: DIR_COLORS[dir],
+    arrow: DIR_ARROWS[dir],
+    hit: false, missed: false,
+    strong,
+    spawnTime: performance.now(),
+  });
+}
+
+function drawFrame() {
+  const canvas = document.getElementById('canvas');
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  const hitY = canvas.height - 110;
+
+  // hit zone glow
+  const laneCount = 4;
+  const margin = (canvas.width - (64 * laneCount + 14 * (laneCount-1))) / 2;
+  ['left','up','down','right'].forEach((dir, i) => {
+    const x = margin + i * (64+14);
+    ctx.strokeStyle = hexToRgba(DIR_COLORS[dir], 0.15);
+    ctx.lineWidth = 1;
+    ctx.strokeRect(x, hitY - 28, 64, 60);
+  });
+
+  // draw tiles
+  for (let t of gameState.tiles) {
+    if (t.hit) continue;
+    const alpha = t.missed ? 0.25 : 1;
+    const x = t.x - t.size/2;
+    const y = t.y - t.size/2;
+
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    // glow
+    ctx.shadowColor = t.color;
+    ctx.shadowBlur = t.missed ? 0 : (t.strong ? 22 : 14);
+    // bg
+    ctx.fillStyle = hexToRgba(t.color, 0.15);
+    roundRect(ctx, x, y, t.size, t.size, 10);
+    ctx.fill();
+    // border
+    ctx.strokeStyle = t.color;
+    ctx.lineWidth = t.missed ? 1 : 2.5;
+    roundRect(ctx, x, y, t.size, t.size, 10);
+    ctx.stroke();
+    // arrow
+    ctx.shadowBlur = 0;
+    ctx.fillStyle = t.missed ? hexToRgba(t.color, 0.4) : t.color;
+    ctx.font = 'bold 26px Arial';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(t.arrow, t.x, t.y);
+    ctx.restore();
+  }
+}
+
+function roundRect(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x+r, y);
+  ctx.lineTo(x+w-r, y);
+  ctx.arcTo(x+w, y, x+w, y+r, r);
+  ctx.lineTo(x+w, y+h-r);
+  ctx.arcTo(x+w, y+h, x+w-r, y+h, r);
+  ctx.lineTo(x+r, y+h);
+  ctx.arcTo(x, y+h, x, y+h-r, r);
+  ctx.lineTo(x, y+r);
+  ctx.arcTo(x, y, x+r, y, r);
+  ctx.closePath();
+}
+
+function hexToRgba(hex, alpha) {
+  const r = parseInt(hex.slice(1,3),16);
+  const g = parseInt(hex.slice(3,5),16);
+  const b = parseInt(hex.slice(5,7),16);
+  return `rgba(${r},${g},${b},${alpha})`;
+}
+
+// ===================== INPUT =====================
+document.addEventListener('keydown', (e) => {
+  const dir = DIR_KEYS[e.key];
+  if (!dir) {
+    if (e.key === 'Escape' && document.getElementById('gameScreen') && !document.getElementById('gameScreen').classList.contains('hidden')) {
+      togglePause();
+    }
+    return;
+  }
+  e.preventDefault();
+  if (!gameState || gameState.ended || isPaused) return;
+  if (gameState.keysHeld[dir]) return;
+  gameState.keysHeld[dir] = true;
+
+  // visual feedback
+  document.getElementById(KEY_EL[dir]).classList.add('active');
+  setTimeout(() => document.getElementById(KEY_EL[dir]).classList.remove('active'), 120);
+
+  tryHit(dir);
+});
+
+document.addEventListener('keyup', (e) => {
+  const dir = DIR_KEYS[e.key];
+  if (dir && gameState) gameState.keysHeld[dir] = false;
+});
+
+function tryHit(dir) {
+  if (!gameState) return;
+  const hitY = gameState.canvasH - 110;
+  const HW = HIT_WINDOW * (gameState.speed > 2 ? 0.8 : 1);
+
+  // find closest tile of this direction within hit window
+  let best = null, bestDist = Infinity;
+  for (let t of gameState.tiles) {
+    if (t.hit || t.missed || t.dir !== dir) continue;
+    const dist = Math.abs(t.y - hitY);
+    if (dist < bestDist) { bestDist = dist; best = t; }
+  }
+
+  const tilePixelWindow = gameState.canvasH * 0.07;
+  if (best && bestDist < tilePixelWindow) {
+    best.hit = true;
+    onHit(dir, best);
+  } else {
+    // pressed but no tile: slight penalty
+    onMiss(true);
+  }
+}
+
+function onHit(dir, tile) {
+  gameState.score++;
+  gameState.combo++;
+  gameState.hits++;
+  if (gameState.combo > gameState.maxCombo) gameState.maxCombo = gameState.combo;
+
+  updateScoreDisplay();
+  showFeedback(gameState.combo >= 10 ? 'PERFECT!!' : 'PERFECT', DIR_COLORS[dir]);
+  playHitSound(true);
+  spawnParticles(DIR_COLORS[dir]);
+  updateCharacter(gameState.score, true);
+  checkPraise();
+}
+
+function onMiss(empty) {
+  if (!gameState) return;
+  gameState.score = Math.max(-20, gameState.score - 1);
+  gameState.combo = 0;
+  if (!empty) gameState.misses++;
+
+  updateScoreDisplay();
+  showFeedback('MISS', '#ff2d78');
+  playHitSound(false);
+  updateCharacter(gameState.score, false);
+}
+
+function updateScoreDisplay() {
+  document.getElementById('scoreDisplay').textContent = gameState.score;
+  document.getElementById('comboDisplay').textContent = gameState.combo;
+}
+
+// ===================== FEEDBACK =====================
+let feedbackTimeout = null;
+function showFeedback(text, color) {
+  const el = document.getElementById('feedbackText');
+  el.textContent = text;
+  el.style.color = color;
+  el.style.opacity = '1';
+  clearTimeout(feedbackTimeout);
+  feedbackTimeout = setTimeout(() => { el.style.opacity = '0'; }, 500);
+}
+
+const PRAISE_MILESTONES = [
+  [5, "よし！調子いいね！"],
+  [10, "いい感じ！続けて！"],
+  [15, "すごい！コンボ最高！"],
+  [20, "天才！完璧なリズム！"],
+  [30, "マジか！神プレイ！"],
+  [40, "伝説のビートストライカー！"],
+  [50, "超次元の領域だ！！"],
+];
+let praiseTimeout = null;
+function checkPraise() {
+  const s = gameState.score;
+  for (const [threshold, text] of PRAISE_MILESTONES) {
+    if (s >= threshold && gameState.lastPraiseScore < threshold) {
+      gameState.lastPraiseScore = s;
+      showPraise(text);
+      break;
+    }
+  }
+  if (gameState.combo >= 10 && gameState.combo % 10 === 0) {
+    showPraise(`${gameState.combo} COMBO！熱い！`);
+  }
+}
+function showPraise(text) {
+  const el = document.getElementById('praiseText');
+  el.textContent = text;
+  el.style.opacity = '1';
+  clearTimeout(praiseTimeout);
+  praiseTimeout = setTimeout(() => { el.style.opacity = '0'; }, 2000);
+}
+
+// ===================== CHARACTER =====================
+function updateCharacter(score, hit) {
+  const mouth = document.getElementById('charMouth');
+  const armL = document.getElementById('armL');
+  const armR = document.getElementById('armR');
+  const handL = document.getElementById('handL');
+  const handR = document.getElementById('handR');
+  const charEl = document.getElementById('character');
+
+  if (hit) {
+    charEl.style.transform = 'translateX(-50%) scale(1.12) translateY(-4px)';
+    setTimeout(() => { if(charEl) charEl.style.transform = 'translateX(-50%) scale(1) translateY(0)'; }, 180);
+  }
+
+  if (score >= 40) {
+    // ecstatic: huge smile, arms way up, golden eyes
+    mouth.setAttribute('d', 'M22 33 Q30 40 38 33');
+    armL.setAttribute('d', 'M18 56 Q8 46 6 40');
+    armR.setAttribute('d', 'M42 56 Q52 46 54 40');
+    handL.setAttribute('cx','6'); handL.setAttribute('cy','39');
+    handR.setAttribute('cx','54'); handR.setAttribute('cy','39');
+    document.querySelectorAll('#charSvg circle[r="2.5"]').forEach(c => c.setAttribute('fill','#d4a800'));
+  } else if (score >= 20) {
+    // happy: big smile, arms up
+    mouth.setAttribute('d', 'M23 33 Q30 38 37 33');
+    armL.setAttribute('d', 'M18 56 Q10 50 8 44');
+    armR.setAttribute('d', 'M42 56 Q50 50 52 44');
+    handL.setAttribute('cx','8'); handL.setAttribute('cy','43');
+    handR.setAttribute('cx','52'); handR.setAttribute('cy','43');
+    document.querySelectorAll('#charSvg circle[r="2.5"]').forEach(c => c.setAttribute('fill','#2aa0cc'));
+  } else if (score >= 10) {
+    // content: normal smile, relaxed arms
+    mouth.setAttribute('d', 'M25 33 Q30 37 35 33');
+    armL.setAttribute('d', 'M18 56 Q10 62 9 68');
+    armR.setAttribute('d', 'M42 56 Q50 62 51 68');
+    handL.setAttribute('cx','9'); handL.setAttribute('cy','69');
+    handR.setAttribute('cx','51'); handR.setAttribute('cy','69');
+    document.querySelectorAll('#charSvg circle[r="2.5"]').forEach(c => c.setAttribute('fill','#4ab8d8'));
+  } else if (score < 0) {
+    // sad: frown, arms droopy
+    mouth.setAttribute('d', 'M25 36 Q30 32 35 36');
+    armL.setAttribute('d', 'M18 56 Q12 64 11 72');
+    armR.setAttribute('d', 'M42 56 Q48 64 49 72');
+    handL.setAttribute('cx','11'); handL.setAttribute('cy','73');
+    handR.setAttribute('cx','49'); handR.setAttribute('cy','73');
+    document.querySelectorAll('#charSvg circle[r="2.5"]').forEach(c => c.setAttribute('fill','#6a9aaa'));
+  } else {
+    mouth.setAttribute('d', 'M25 33 Q30 37 35 33');
+    armL.setAttribute('d', 'M18 56 Q10 62 9 68');
+    armR.setAttribute('d', 'M42 56 Q50 62 51 68');
+    handL.setAttribute('cx','9'); handL.setAttribute('cy','69');
+    handR.setAttribute('cx','51'); handR.setAttribute('cy','69');
+    document.querySelectorAll('#charSvg circle[r="2.5"]').forEach(c => c.setAttribute('fill','#4ab8d8'));
+  }
+}
+
+// ===================== PARTICLES =====================
+function spawnParticles(color) {
+  const hz = document.getElementById('character');
+  const rect = hz.getBoundingClientRect();
+  const cx = rect.left + rect.width/2;
+  const cy = rect.top + rect.height/2;
+  for (let i = 0; i < 8; i++) {
+    const p = document.createElement('div');
+    p.className = 'particle';
+    const angle = (Math.PI * 2 / 8) * i;
+    const dist = 40 + Math.random()*30;
+    p.style.cssText = `
+      left:${cx}px;top:${cy}px;width:6px;height:6px;
+      background:${color};
+      --px:${Math.cos(angle)*dist}px;--py:${Math.sin(angle)*dist}px;
+    `;
+    document.body.appendChild(p);
+    setTimeout(() => p.remove(), 700);
+  }
+}
+
+// ===================== PAUSE =====================
+function togglePause() {
+  isPaused = !isPaused;
+  document.getElementById('pauseOverlay').classList.toggle('hidden', !isPaused);
+  if (!isPaused) {
+    lastTime = performance.now();
+    if (gameState) gameState.nextBeatTime = performance.now() + (60000 / gameState.song.bpm);
+  }
+}
+function resumeGame() {
+  if (isPaused) togglePause();
+}
+function quitGame() {
+  isPaused = false;
+  document.getElementById('pauseOverlay').classList.add('hidden');
+  stopGame();
+  goToSelect();
+}
+
+// ===================== END GAME =====================
+function endGame() {
+  if (!gameState || gameState.ended) return;
+  gameState.ended = true;
+  cancelAnimationFrame(animFrame);
+  isPaused = false;
+  document.getElementById('pauseOverlay').classList.add('hidden');
+
+  const score = gameState.score;
+  const isNewBest = score > bestScore;
+  if (isNewBest) {
+    bestScore = score;
+    localStorage.setItem('beatstriker_best', bestScore);
+  }
+
+  // grade
+  let grade, gradeColor, titleMsg, resultMsg;
+  if (score >= 50) {
+    grade = 'SSS'; gradeColor = '#ffe600';
+    titleMsg = '完璧！';
+    resultMsg = '伝説のビートストライカー！あなたは音楽の神に選ばれた存在だ！この世界に並ぶ者はいない！';
+  } else if (score >= 35) {
+    grade = 'S'; gradeColor = '#39ff14';
+    titleMsg = '超絶！';
+    resultMsg = '信じられないパフォーマンス！あなたのリズム感覚は超人的だ。もう少しで伝説の域に達する！';
+  } else if (score >= 25) {
+    grade = 'A'; gradeColor = '#00f5ff';
+    titleMsg = '最高！';
+    resultMsg = '素晴らしい演奏だった！反射神経とリズム感が抜群。次はSランクを狙え！';
+  } else if (score >= 15) {
+    grade = 'B'; gradeColor = '#bf5fff';
+    titleMsg = 'グッジョブ！';
+    resultMsg = '良いプレイ！だが、まだ上を目指せる。ビートを体で感じれば、もっと上のランクに手が届く！';
+  } else if (score >= 5) {
+    grade = 'C'; gradeColor = '#ff8800';
+    titleMsg = 'まあまあ';
+    resultMsg = 'リズムに慣れてきた感じがする。練習を重ねれば必ず上達する。諦めずに続けよう！';
+  } else if (score >= 0) {
+    grade = 'D'; gradeColor = '#ff2d78';
+    titleMsg = 'もう一度！';
+    resultMsg = 'まだ慣れていないみたいだ。タイミングに集中して、方塊が判定ラインに来た瞬間に押そう！';
+  } else {
+    grade = 'F'; gradeColor = '#666';
+    titleMsg = '練習あるのみ！';
+    resultMsg = 'ビートのリズムを体に叩き込もう。最初はゆっくりした曲から始めるのがオススメだ！';
+  }
+
+  document.getElementById('resultTitle').textContent = titleMsg;
+  document.getElementById('resultGrade').textContent = grade;
+  document.getElementById('resultGrade').style.color = gradeColor;
+  document.getElementById('resultGrade').style.textShadow = `0 0 30px ${gradeColor}`;
+  document.getElementById('rScore').textContent = score;
+  document.getElementById('rHit').textContent = gameState.hits;
+  document.getElementById('rMiss').textContent = gameState.misses;
+  document.getElementById('rMaxCombo').textContent = gameState.maxCombo;
+  document.getElementById('resultMessage').textContent = resultMsg;
+
+  const badge = document.getElementById('newBestBadge');
+  badge.style.display = isNewBest ? '' : 'none';
+
+  gameState = null;
+  showScreen('resultScreen');
+}
+
+function stopGame() {
+  if (gameState) { gameState.ended = true; gameState = null; }
+  cancelAnimationFrame(animFrame);
+  if (beatInterval) clearInterval(beatInterval);
+}
+
+function restartGame() {
+  stopGame();
+  startGame();
+}
+
+// ===================== SCREENS =====================
+function showScreen(id) {
+  const all = ['tutorialScreen','selectScreen','gameScreen','resultScreen'];
+  all.forEach(s => {
+    const el = document.getElementById(s);
+    if (s === id) {
+      el.classList.remove('hidden');
+    } else {
+      el.classList.add('hidden');
+    }
+  });
+}
+
+// ===================== BOOT =====================
+window.onload = init;
+</script>
+</body>
+</html>
